@@ -1,0 +1,102 @@
+name:          hyperloglog
+category:      Numeric
+version:       0.1
+license:       BSD3
+cabal-version: >= 1.8
+license-file:  LICENSE
+author:        Edward A. Kmett
+maintainer:    Edward A. Kmett <ekmett@gmail.com>
+stability:     provisional
+homepage:      http://github.com/analytics/hyperloglog
+bug-reports:   http://github.com/analytics/hyperloglog/issues
+copyright:     Copyright (C) 2013 Edward A. Kmett
+build-type:    Custom
+tested-with:   GHC == 7.4.1, GHC == 7.6.1
+synopsis:      An approximate streaming (constant space) unique object counter
+description:
+  This package provides an approximate streaming (constant space) unique object counter.
+  .
+  See the original paper for details:
+  <http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf>
+  .
+  Notably it can be used to approximate a set of several billion elements with 1-2% inaccuracy
+  in around 1.5k of memory.
+
+extra-source-files:
+  .travis.yml
+  .ghci
+  .gitignore
+  .vim.custom
+  travis/cabal-apt-install
+  travis/config
+  AUTHORS.markdown
+  README.markdown
+  CHANGELOG.markdown
+
+source-repository head
+  type: git
+  location: git://github.com/analytics/hyperloglog.git
+
+-- You can disable the doctests test suite with -f-test-doctests
+flag test-doctests
+  default: True
+  manual: True
+
+flag lib-Werror
+  default: False
+  manual: True
+
+library
+  build-depends:
+    approximate               >= 0.1      && < 1,
+    base                      >= 4.3      && < 5,
+    binary                    >= 0.5      && < 0.8,
+    bits                      >= 0.2      && < 1,
+    bytes                     >= 0.7      && < 1,
+    cereal                    >= 0.3.5    && < 0.4,
+    cereal-vector             >= 0.2      && < 0.3,
+    comonad                   >= 3        && < 4,
+    deepseq                   >= 1.3      && < 1.5,
+    distributive              >= 0.3      && < 1,
+    generic-deriving          >= 1.4      && < 1.6,
+    hashable                  >= 1.1.2.3  && < 1.3,
+    hashable-extras           >= 0.1      && < 1,
+    lens                      >= 3.9      && < 4,
+    reflection                >= 1.3      && < 2,
+    semigroupoids             >= 3.0.2    && < 4,
+    semigroups                >= 0.8.4    && < 1,
+    safecopy                  >= 0.8.1    && < 0.9,
+    tagged                    >= 0.4.5    && < 1,
+    vector                    >= 0.9      && < 0.11
+
+  exposed-modules:
+    Data.HyperLogLog
+    Data.HyperLogLog.Config
+    Data.HyperLogLog.Type
+
+  if flag(lib-Werror)
+    ghc-options: -Werror
+
+  ghc-options: -Wall -fwarn-tabs -O2
+  hs-source-dirs: src
+
+test-suite doctests
+  type:           exitcode-stdio-1.0
+  main-is:        doctests.hs
+  ghc-options:    -Wall -threaded
+  hs-source-dirs: tests
+
+  if !flag(test-doctests)
+    buildable: False
+  else
+    build-depends:
+      base,
+      directory      >= 1.0,
+      doctest        >= 0.9.1,
+      filepath,
+      generic-deriving,
+      semigroups     >= 0.9,
+      simple-reflect >= 0.3.1
+
+  if impl(ghc<7.6.1)
+    ghc-options: -Werror
