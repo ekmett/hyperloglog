@@ -37,6 +37,7 @@ module Data.HyperLogLog.Type
     HyperLogLog(..)
   , HasHyperLogLog(..)
   , size
+  , insert
   , intersectionSize
   , cast
   ) where
@@ -81,10 +82,10 @@ import           GHC.Int
 --
 -- Let's count a list of unique items and get the latest estimate:
 --
--- >>> size (foldr cons mempty [1..10] :: HyperLogLog $(4))
+-- >>> size (foldr insert mempty [1..10] :: HyperLogLog $(4))
 -- Approximate {_confidence = 0.9972, _lo = 2, _estimate = 11, _hi = 20}
 --
--- Note how 'cons' can be used to add new observations to the
+-- Note how 'insert' can be used to add new observations to the
 -- approximate counter.
 newtype HyperLogLog p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
     deriving (Eq, Show, Generic)
@@ -113,21 +114,15 @@ instance ReifiesConfig p => Monoid (HyperLogLog p) where
   mappend = (<>)
   {-# INLINE mappend #-}
 
-instance (Profunctor p, Bifunctor p, Functor f, ReifiesConfig s, Hashable a, s ~ t, a ~ b) => Cons p f (HyperLogLog s) (HyperLogLog t) a b where
-  _Cons = unto go where
-    go (a,m@(HyperLogLog v)) = HyperLogLog $ V.modify (\x -> do old <- MV.read x bk; when (rnk > old) $ MV.write x bk rnk) v where
-      !h = w32 (hash a)
-      !bk = calcBucket m h
-      !rnk = calcRank m h
-  {-# INLINE _Cons #-}
-
-instance (Profunctor p, Bifunctor p, Functor f, ReifiesConfig s, Hashable a, s ~ t, a ~ b) => Snoc p f (HyperLogLog s) (HyperLogLog t) a b where
-  _Snoc = unto go where
-    go (m@(HyperLogLog v), a) = HyperLogLog $ V.modify (\x -> do old <- MV.read x bk; when (rnk > old) $ MV.write x bk rnk) v where
-      !h = w32 (hash a)
-      !bk = calcBucket m h
-      !rnk = calcRank m h
-  {-# INLINE _Snoc #-}
+insert :: (ReifiesConfig s, Hashable a) => a -> HyperLogLog s -> HyperLogLog s
+insert a m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
+    old <- MV.read x bk
+    when (rnk > old) $ MV.write x bk rnk
+  ) v where
+  !h = w32 (hash a)
+  !bk = calcBucket m h
+  !rnk = calcRank m h
+{-# INLINE insert #-}
 
 -- | Approximate size of our set
 size :: ReifiesConfig p => HyperLogLog p -> Approximate Int64
