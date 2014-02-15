@@ -16,6 +16,7 @@ module Data.HyperLogLog
   , HasHyperLogLog(..)
   , size
   , intersectionSize
+  , insert
   , cast
   -- * Config
   , Config

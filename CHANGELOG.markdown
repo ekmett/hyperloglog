@@ -1,3 +1,7 @@
+0.2.1
+-----
+* Exported `insert` from `Data.HyperLogLog`.
+
 0.2
 ---
 * Made compatible with `lens` 4
