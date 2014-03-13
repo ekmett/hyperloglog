@@ -12,9 +12,17 @@
 {-# LANGUAGE TemplateHaskell           #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE UndecidableInstances      #-}
+{-# OPTIONS_GHC -fno-cse #-}
+{-# OPTIONS_GHC -fno-full-laziness #-}
+{-# OPTIONS_GHC -fno-float-in #-}
+{-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
 {-# LANGUAGE PolyKinds                 #-}
+#endif
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+{-# LANGUAGE RoleAnnotations #-}
 #endif
 
 --------------------------------------------------------------------
@@ -89,6 +97,10 @@ import           GHC.Int
 -- approximate counter.
 newtype HyperLogLog p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
     deriving (Eq, Show, Generic)
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+type role HyperLogLog nominal
+#endif
 
 instance Serialize (HyperLogLog p)
 

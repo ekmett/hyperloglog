@@ -13,6 +13,10 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# OPTIONS_GHC -fno-cse #-}
+{-# OPTIONS_GHC -fno-full-laziness #-}
+{-# OPTIONS_GHC -fno-float-in #-}
+{-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
 {-# LANGUAGE DataKinds #-}
@@ -135,7 +139,6 @@ reifyConfig :: Int -> (forall (o :: *). ReifiesConfig o => Proxy o -> r) -> r
 reifyConfig i f = reify (hll i) (go f) where
   go :: Reifies o Config => (Proxy (ReifiedConfig o) -> a) -> proxy o -> a
   go g _ = g Proxy
-
 {-# INLINE reifyConfig #-}
 
 instance Reifies n Int => ReifiesConfig (D n) where
