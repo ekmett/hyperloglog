@@ -1,3 +1,8 @@
+0.2.3
+-----
+* GHC 7.8 compatibility
+* Bumped `cereal` dependency.
+
 0.2.1
 -----
 * Exported `insert` from `Data.HyperLogLog`.
