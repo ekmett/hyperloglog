@@ -120,8 +120,8 @@ class ReifiesConfig o where
   reflectConfig :: p o -> Config
 
 #ifdef USE_TYPE_LITS
-instance SingRep n Integer => ReifiesConfig (n :: Nat) where
-  reflectConfig _ = hll $ fromInteger $ withSing $ \(x :: Sing n) -> fromSing x
+instance KnownNat n => ReifiesConfig (n :: Nat) where
+  reflectConfig _ = hll $ fromInteger $ natVal (Proxy :: Proxy n)
   {-# INLINE reflectConfig #-}
 #endif
 
