@@ -98,7 +98,7 @@ import           GHC.Int
 newtype HyperLogLog p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
     deriving (Eq, Show, Generic)
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 type role HyperLogLog nominal
 #endif
 
