@@ -18,7 +18,7 @@
 {-# OPTIONS_GHC -fno-float-in #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
 #define USE_TYPE_LITS 1
