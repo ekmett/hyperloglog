@@ -21,7 +21,7 @@
 {-# LANGUAGE PolyKinds                 #-}
 #endif
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 {-# LANGUAGE RoleAnnotations #-}
 #endif
 
