@@ -1,3 +1,7 @@
+0.2.3.1
+-------
+* `#ifdef` bugfix
+
 0.2.3
 -----
 * GHC 7.8 compatibility
