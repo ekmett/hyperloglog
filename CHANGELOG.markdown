@@ -1,3 +1,7 @@
+0.2.3.2
+-------
+* More `#ifdef` bugfixes
+
 0.2.3.1
 -------
 * `#ifdef` bugfix
