@@ -18,10 +18,18 @@
 {-# OPTIONS_GHC -fno-float-in #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 705
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
 #define USE_TYPE_LITS 1
+#endif
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+#define USE_NEW_TYPE_LITS 1
+#endif
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 705 && __GLASGOW_HASKELL__ < 707
+#define USE_OLD_TYPE_LITS 1
 #endif
 
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
@@ -119,9 +127,15 @@ hll b = Config
 class ReifiesConfig o where
   reflectConfig :: p o -> Config
 
-#ifdef USE_TYPE_LITS
+#ifdef USE_NEW_TYPE_LITS
 instance KnownNat n => ReifiesConfig (n :: Nat) where
   reflectConfig _ = hll $ fromInteger $ natVal (Proxy :: Proxy n)
+  {-# INLINE reflectConfig #-}
+#endif
+
+#ifdef USE_OLD_TYPE_LITS
+instance SingRep n Integer => ReifiesConfig (n :: Nat) where
+  reflectConfig _ = hll $ fromInteger $ withSing $ \(x :: Sing n) -> fromSing x
   {-# INLINE reflectConfig #-}
 #endif
 
