@@ -8,7 +8,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -48,7 +47,6 @@ module Data.HyperLogLog.Config
     Config
   , HasConfig(..)
   , hll
-  , numBits, numBuckets, smallRange, interRange, rawFact, alpha, bucketMask
   -- * ReifiesConfig
   , ReifiesConfig(..)
   , reifyConfig
@@ -91,12 +89,28 @@ data Config = Config
   } deriving (Eq, Show, Generic)
 
 class HasConfig t where
-  config :: Getter t Config
+  config     :: Getter t Config
 
-makeLensesWith ?? ''Config $ classyRules
-  & generateSignatures .~ False
-  & createClass        .~ False
-  & createInstance     .~ False
+  numBits    :: Getter t Int
+  numBits     = config . to _numBits
+
+  numBuckets :: Getter t Int
+  numBuckets  = config . to _numBuckets
+
+  smallRange :: Getter t Double
+  smallRange  = config . to _smallRange
+
+  interRange :: Getter t Double
+  interRange  = config . to _interRange
+
+  rawFact    :: Getter t Double
+  rawFact     = config . to _rawFact
+
+  alpha      :: Getter t Double
+  alpha       = config . to _alpha
+
+  bucketMask :: Getter t Word32
+  bucketMask  = config . to _bucketMask
 
 instance HasConfig Config where
   config = id

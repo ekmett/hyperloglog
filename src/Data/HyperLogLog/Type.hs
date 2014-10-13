@@ -9,7 +9,6 @@
 {-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE RecordWildCards           #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
-{-# LANGUAGE TemplateHaskell           #-}
 {-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE UndecidableInstances      #-}
 {-# OPTIONS_GHC -fno-cse #-}
@@ -104,7 +103,11 @@ type role HyperLogLog nominal
 
 instance Serialize (HyperLogLog p)
 
-makeClassy ''HyperLogLog
+class HasHyperLogLog a p | a -> p where
+  hyperLogLog :: Lens' a (HyperLogLog p)
+
+instance HasHyperLogLog (HyperLogLog p) p where
+  hyperLogLog = id
 
 _HyperLogLog :: Iso' (HyperLogLog p) (V.Vector Rank)
 _HyperLogLog = iso runHyperLogLog HyperLogLog
