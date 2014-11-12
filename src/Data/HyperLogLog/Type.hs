@@ -52,18 +52,19 @@ module Data.HyperLogLog.Type
 import           Control.Applicative
 import           Control.Lens
 import           Control.Monad
+import           Crypto.MAC.SipHash
 import           Data.Approximate.Type
 import           Data.Bits
 import           Data.Bits.Extras
 import           Data.Bytes.Put (runPutS)
 import           Data.Bytes.Serial
-import           Data.Hashable
 import           Data.HyperLogLog.Config
 import           Data.Proxy
 import           Data.Semigroup
 import           Data.Serialize
 import qualified Data.Vector.Unboxed                           as V
 import qualified Data.Vector.Unboxed.Mutable                   as MV
+import           Data.Word
 import           Generics.Deriving                             hiding (D, to)
 import           GHC.Int
 
@@ -131,13 +132,21 @@ instance ReifiesConfig p => Monoid (HyperLogLog p) where
   mappend = (<>)
   {-# INLINE mappend #-}
 
+sipKey :: SipKey
+sipKey = SipKey 4 7
+
+siphash :: (Serial a) => a -> Word64
+siphash a = h
+  where !bs = runPutS (serialize a)
+        (SipHash !h) = hash sipKey bs
+{-# INLINE siphash #-}
+
 insert :: (ReifiesConfig s, Serial a) => a -> HyperLogLog s -> HyperLogLog s
 insert a m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
     old <- MV.read x bk
     when (rnk > old) $ MV.write x bk rnk
   ) v where
-  !h = w32 (hash a')
-  !a' = runPutS (serialize a)
+  !h = w32 (siphash a)
   !bk = calcBucket m h
   !rnk = calcRank m h
 {-# INLINE insert #-}
