@@ -55,6 +55,8 @@ import           Control.Monad
 import           Data.Approximate.Type
 import           Data.Bits
 import           Data.Bits.Extras
+import           Data.Bytes.Put (runPutS)
+import           Data.Bytes.Serial
 import           Data.Hashable
 import           Data.HyperLogLog.Config
 import           Data.Proxy
@@ -129,12 +131,13 @@ instance ReifiesConfig p => Monoid (HyperLogLog p) where
   mappend = (<>)
   {-# INLINE mappend #-}
 
-insert :: (ReifiesConfig s, Hashable a) => a -> HyperLogLog s -> HyperLogLog s
+insert :: (ReifiesConfig s, Serial a) => a -> HyperLogLog s -> HyperLogLog s
 insert a m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
     old <- MV.read x bk
     when (rnk > old) $ MV.write x bk rnk
   ) v where
-  !h = w32 (hash a)
+  !h = w32 (hash a')
+  !a' = runPutS (serialize a)
   !bk = calcBucket m h
   !rnk = calcRank m h
 {-# INLINE insert #-}
