@@ -52,16 +52,19 @@ module Data.HyperLogLog.Type
 import           Control.Applicative
 import           Control.Lens
 import           Control.Monad
+import           Crypto.MAC.SipHash
 import           Data.Approximate.Type
 import           Data.Bits
 import           Data.Bits.Extras
-import           Data.Hashable
+import           Data.Bytes.Put (runPutS)
+import           Data.Bytes.Serial
 import           Data.HyperLogLog.Config
 import           Data.Proxy
 import           Data.Semigroup
 import           Data.Serialize
 import qualified Data.Vector.Unboxed                           as V
 import qualified Data.Vector.Unboxed.Mutable                   as MV
+import           Data.Word
 import           Generics.Deriving                             hiding (D, to)
 import           GHC.Int
 
@@ -90,7 +93,7 @@ import           GHC.Int
 -- Let's count a list of unique items and get the latest estimate:
 --
 -- >>> size (foldr insert mempty [1..10] :: HyperLogLog $(4))
--- Approximate {_confidence = 0.9972, _lo = 2, _estimate = 11, _hi = 20}
+-- Approximate {_confidence = 0.9972, _lo = 2, _estimate = 9, _hi = 17}
 --
 -- Note how 'insert' can be used to add new observations to the
 -- approximate counter.
@@ -129,12 +132,21 @@ instance ReifiesConfig p => Monoid (HyperLogLog p) where
   mappend = (<>)
   {-# INLINE mappend #-}
 
-insert :: (ReifiesConfig s, Hashable a) => a -> HyperLogLog s -> HyperLogLog s
+sipKey :: SipKey
+sipKey = SipKey 4 7
+
+siphash :: (Serial a) => a -> Word64
+siphash a = h
+  where !bs = runPutS (serialize a)
+        (SipHash !h) = hash sipKey bs
+{-# INLINE siphash #-}
+
+insert :: (ReifiesConfig s, Serial a) => a -> HyperLogLog s -> HyperLogLog s
 insert a m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
     old <- MV.read x bk
     when (rnk > old) $ MV.write x bk rnk
   ) v where
-  !h = w32 (hash a)
+  !h = w32 (siphash a)
   !bk = calcBucket m h
   !rnk = calcRank m h
 {-# INLINE insert #-}
