@@ -1,3 +1,7 @@
+0.3
+---
+* Switched to `SipHash`, so the package actually works.
+
 0.2.3.2
 -------
 * More `#ifdef` bugfixes
