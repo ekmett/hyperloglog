@@ -1,3 +1,7 @@
+0.3.0.1
+---
+* Constraint bumps for `lens` and `generic-deriving`
+
 0.3
 ---
 * Switched to `SipHash`, so the package actually works.
