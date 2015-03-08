@@ -1,3 +1,9 @@
+0.3.1
+-----
+* Added `insertHash`. This enables users of the 0.2
+  era version of `hyperloglog` to manually pick the
+  hash used and load their old data.
+
 0.3.0.1
 ---
 * Constraint bumps for `lens` and `generic-deriving`

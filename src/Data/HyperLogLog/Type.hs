@@ -44,6 +44,7 @@ module Data.HyperLogLog.Type
   , HasHyperLogLog(..)
   , size
   , insert
+  , insertHash
   , intersectionSize
   , cast
   ) where
@@ -134,21 +135,25 @@ instance ReifiesConfig p => Monoid (HyperLogLog p) where
 sipKey :: SipKey
 sipKey = SipKey 4 7
 
-siphash :: (Serial a) => a -> Word64
+siphash :: Serial a => a -> Word64
 siphash a = h
   where !bs = runPutS (serialize a)
         (SipHash !h) = hash sipKey bs
 {-# INLINE siphash #-}
 
 insert :: (ReifiesConfig s, Serial a) => a -> HyperLogLog s -> HyperLogLog s
-insert a m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
+insert a m = insertHash (w32 (siphash a)) m
+{-# INLINE insert #-}
+
+-- | Insert a value that has already been hashed by whatever user defined hash function you want.
+insertHash :: ReifiesConfig s => Word32 -> HyperLogLog s -> HyperLogLog s
+insertHash h m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
     old <- MV.read x bk
     when (rnk > old) $ MV.write x bk rnk
   ) v where
-  !h = w32 (siphash a)
   !bk = calcBucket m h
   !rnk = calcRank m h
-{-# INLINE insert #-}
+{-# INLINE insertHash #-}
 
 -- | Approximate size of our set
 size :: ReifiesConfig p => HyperLogLog p -> Approximate Int64
