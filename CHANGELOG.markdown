@@ -3,6 +3,7 @@
 * Added `insertHash`. This enables users of the 0.2
   era version of `hyperloglog` to manually pick the
   hash used and load their old data.
+* Builds warning-free on GHC 7.10
 
 0.3.0.1
 ---
