@@ -49,7 +49,10 @@ module Data.HyperLogLog.Type
   , cast
   ) where
 
+#if __GLASGOW_HASKELL__ < 710
 import           Control.Applicative
+#endif
+
 import           Control.Lens
 import           Control.Monad
 import           Crypto.MAC.SipHash
