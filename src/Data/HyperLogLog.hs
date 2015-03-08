@@ -17,6 +17,7 @@ module Data.HyperLogLog
   , size
   , intersectionSize
   , insert
+  , insertHash
   , cast
   -- * Config
   , Config
