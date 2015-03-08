@@ -142,7 +142,7 @@ siphash a = h
 {-# INLINE siphash #-}
 
 insert :: (ReifiesConfig s, Serial a) => a -> HyperLogLog s -> HyperLogLog s
-insert a m = insertHash (w32 (siphash a)) m
+insert = insertHash . w32 . siphash
 {-# INLINE insert #-}
 
 -- | Insert a value that has already been hashed by whatever user defined hash function you want.
