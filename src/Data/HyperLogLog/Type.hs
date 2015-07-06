@@ -73,6 +73,7 @@ import           GHC.Int
 
 -- $setup
 -- >>> :set -XTemplateHaskell
+-- >>> :set -XDataKinds
 -- >>> :load Data.HyperLogLog
 -- >>> import Control.Lens
 -- >>> import Data.Reflection
