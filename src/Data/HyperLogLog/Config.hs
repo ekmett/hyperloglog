@@ -162,7 +162,7 @@ instance Reifies s Config => ReifiesConfig (ReifiedConfig s) where
 
 reifyConfig :: Int -> (forall (o :: *). ReifiesConfig o => Proxy o -> r) -> r
 reifyConfig i f = reify (hll i) (go f) where
-  go :: Reifies o Config => (Proxy (ReifiedConfig o) -> a) -> proxy o -> a
+  go :: (Proxy (ReifiedConfig o) -> a) -> proxy o -> a
   go g _ = g Proxy
 {-# INLINE reifyConfig #-}
 
