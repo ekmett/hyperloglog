@@ -1,3 +1,7 @@
+0.3.2
+-----
+* Simplified `reifyConfig` internals.
+
 0.3.1
 -----
 * Added `insertHash`. This enables users of the 0.2
