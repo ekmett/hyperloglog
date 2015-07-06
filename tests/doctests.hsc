@@ -33,7 +33,9 @@ foreign import stdcall "windows.h SetConsoleCP" c_SetConsoleCP :: CUInt -> IO Bo
 foreign import stdcall "windows.h GetConsoleCP" c_GetConsoleCP :: IO CUInt
 ##elif defined(x86_64_HOST_ARCH)
 ##define USE_CP
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
 import Control.Exception
 import Foreign.C.Types
 foreign import ccall "windows.h SetConsoleCP" c_SetConsoleCP :: CUInt -> IO Bool
