@@ -42,10 +42,6 @@ flag test-doctests
   default: True
   manual: True
 
-flag lib-Werror
-  default: False
-  manual: True
-
 library
   build-depends:
     approximate               >= 0.2.1    && < 1,
@@ -75,9 +71,6 @@ library
     Data.HyperLogLog.Config
     Data.HyperLogLog.Type
 
-  if flag(lib-Werror)
-    ghc-options: -Werror
-
   ghc-options: -Wall -fwarn-tabs -O2
   hs-source-dirs: src
 
@@ -98,6 +91,3 @@ test-suite doctests
       generic-deriving,
       semigroups     >= 0.9,
       simple-reflect >= 0.3.1
-
-  if impl(ghc<7.6.1)
-    ghc-options: -Werror
