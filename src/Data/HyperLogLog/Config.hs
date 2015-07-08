@@ -64,7 +64,9 @@ import Data.Reflection
 import Data.Serialize
 import Data.Vector.Serialize ()
 import GHC.Int
+#if __GLASGOW_HASKELL__ < 710
 import GHC.Word
+#endif
 import Generics.Deriving hiding (to, D)
 #ifdef USE_TYPE_LITS
 import GHC.TypeLits

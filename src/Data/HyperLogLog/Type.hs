@@ -69,7 +69,9 @@ import           Data.Semigroup
 import           Data.Serialize as Serialize
 import qualified Data.Vector.Unboxed                           as V
 import qualified Data.Vector.Unboxed.Mutable                   as MV
+#if __GLASGOW_HASKELL__ < 710
 import           Data.Word
+#endif
 import           Generics.Deriving                             hiding (D, to)
 import           GHC.Int
 
