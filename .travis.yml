@@ -8,11 +8,11 @@ env:
  - GHCVER=7.6.3 CABALVER=1.16
  - GHCVER=7.8.4 CABALVER=1.18
  - GHCVER=7.10.1 CABALVER=1.22
- - GHCVER=head CABALVER=1.23
+ - GHCVER=head CABALVER=1.22
 
 matrix:
   allow_failures:
-   - env: GHCVER=head CABALVER=1.23
+   - env: GHCVER=head CABALVER=1.22
 
 # Note: the distinction between `before_install` and `install` is not
 #       important.
@@ -32,6 +32,7 @@ install:
 # build to fail.
 script:
  # -v2 provides useful information for debugging
+ - cabal clean
  - cabal configure -v2 --enable-tests
 
  # this builds all libraries and executables
