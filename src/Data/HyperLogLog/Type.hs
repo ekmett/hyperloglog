@@ -59,12 +59,14 @@ import           Crypto.MAC.SipHash
 import           Data.Approximate.Type
 import           Data.Bits
 import           Data.Bits.Extras
+import qualified Data.Binary as Binary
+import           Data.Binary
 import           Data.Bytes.Put (runPutS)
 import           Data.Bytes.Serial
 import           Data.HyperLogLog.Config
 import           Data.Proxy
 import           Data.Semigroup
-import           Data.Serialize
+import           Data.Serialize as Serialize
 import qualified Data.Vector.Unboxed                           as V
 import qualified Data.Vector.Unboxed.Mutable                   as MV
 import           Data.Word
@@ -109,6 +111,14 @@ type role HyperLogLog nominal
 #endif
 
 instance Serialize (HyperLogLog p)
+
+instance Serial (HyperLogLog p) where
+  serialize (HyperLogLog v) = serialize (V.toList v)
+  deserialize = liftM (HyperLogLog . V.fromList) deserialize
+
+instance Binary (HyperLogLog p) where
+  put (HyperLogLog v) = Binary.put (V.toList v)
+  get = fmap (HyperLogLog . V.fromList) Binary.get
 
 class HasHyperLogLog a p | a -> p where
   hyperLogLog :: Lens' a (HyperLogLog p)
