@@ -1,3 +1,8 @@
+0.3.3
+-----
+* Added `bytes` and `binary` instances.
+* Compiles warning-free on GHC 7.10.
+
 0.3.2
 -----
 * Simplified `reifyConfig` internals.
