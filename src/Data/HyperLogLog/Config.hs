@@ -55,8 +55,10 @@ module Data.HyperLogLog.Config
   ) where
 
 import Control.Lens
+import Data.Binary
 import Data.Bits
 import Data.Bits.Extras
+import Data.Bytes.Serial
 import Data.Proxy
 import Data.Reflection
 import Data.Serialize
@@ -114,6 +116,12 @@ instance HasConfig Config where
   {-# INLINE config #-}
 
 instance Serialize Config -- serialize as a number?
+
+instance Binary Config where
+  put = serialize
+  get = deserialize
+
+instance Serial Config
 
 -- | Precalculate constants for a given bucketing factor b
 hll :: Int -> Config
