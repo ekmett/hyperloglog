@@ -1,3 +1,7 @@
+0.3.3.1
+-------
+* Support `reflection` 2
+
 0.3.3
 -----
 * Added `bytes` and `binary` instances.
