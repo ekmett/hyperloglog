@@ -21,33 +21,34 @@ before_install:
  - travis_retry sudo apt-get update
  - travis_retry sudo apt-get install cabal-install-$CABALVER ghc-$GHCVER
  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
- - cabal --version
+ - export CABAL=cabal-$CABALVER
+ - $CABAL --version
 
 install:
  - travis_retry cabal update
- - cabal install --only-dependencies --enable-tests
+ - $CABAL install --only-dependencies --enable-tests
 
 # Here starts the actual work to be performed for the package under
 # test; any command which exits with a non-zero exit code causes the
 # build to fail.
 script:
  # -v2 provides useful information for debugging
- - cabal clean
- - cabal configure -v2 --enable-tests
+ - $CABAL clean
+ - $CABAL configure -v2 --enable-tests
 
  # this builds all libraries and executables
  # (including tests/benchmarks)
- - cabal build
- - cabal test
+ - $CABAL build
+ - $CABAL test
 
  # tests that a source-distribution can be generated
- - cabal sdist
+ - $CABAL sdist
 
  # check that the generated source-distribution can be built & installed
- - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
+ - export SRC_TGZ=$($CABAL info . | awk '{print $2 ".tar.gz";exit}') ;
    cd dist/;
    if [ -f "$SRC_TGZ" ]; then
-      cabal install --force-reinstalls "$SRC_TGZ";
+      $CABAL install --force-reinstalls "$SRC_TGZ";
    else
       echo "expected '$SRC_TGZ' not found";
       exit 1;
