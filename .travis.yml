@@ -39,7 +39,6 @@ script:
  # this builds all libraries and executables
  # (including tests/benchmarks)
  - $CABAL build
- - $CABAL test
 
  # tests that a source-distribution can be generated
  - $CABAL sdist
