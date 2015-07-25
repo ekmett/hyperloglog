@@ -1,3 +1,7 @@
+0.3.4
+-----
+* Support `generic-deriving` 1.8. We no longer incur a `generic-deriving` requirement at all except on GHC < 7.6.
+
 0.3.3.1
 -------
 * Support `reflection` 2
