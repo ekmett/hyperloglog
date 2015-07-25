@@ -67,7 +67,11 @@ import GHC.Int
 #if __GLASGOW_HASKELL__ < 710
 import GHC.Word
 #endif
+#if __GLASGOW_HASKELL__ < 706
 import Generics.Deriving hiding (to, D)
+#else
+import GHC.Generics hiding (to, D)
+#endif
 #ifdef USE_TYPE_LITS
 import GHC.TypeLits
 #endif

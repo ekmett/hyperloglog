@@ -50,30 +50,34 @@ module Data.HyperLogLog.Type
   ) where
 
 #if __GLASGOW_HASKELL__ < 710
-import           Control.Applicative
+import Control.Applicative
 #endif
 
-import           Control.Lens
-import           Control.Monad
-import           Crypto.MAC.SipHash
-import           Data.Approximate.Type
-import           Data.Bits
-import           Data.Bits.Extras
+import Control.Lens
+import Control.Monad
+import Crypto.MAC.SipHash
+import Data.Approximate.Type
+import Data.Bits
+import Data.Bits.Extras
 import qualified Data.Binary as Binary
-import           Data.Binary
-import           Data.Bytes.Put (runPutS)
-import           Data.Bytes.Serial
-import           Data.HyperLogLog.Config
-import           Data.Proxy
-import           Data.Semigroup
-import           Data.Serialize as Serialize
-import qualified Data.Vector.Unboxed                           as V
-import qualified Data.Vector.Unboxed.Mutable                   as MV
+import Data.Binary
+import Data.Bytes.Put (runPutS)
+import Data.Bytes.Serial
+import Data.HyperLogLog.Config
+import Data.Proxy
+import Data.Semigroup
+import Data.Serialize as Serialize
+import qualified Data.Vector.Unboxed as V
+import qualified Data.Vector.Unboxed.Mutable as MV
 #if __GLASGOW_HASKELL__ < 710
-import           Data.Word
+import Data.Word
 #endif
-import           Generics.Deriving                             hiding (D, to)
-import           GHC.Int
+#if __GLASGOW_HASKELL__ < 706
+import Generics.Deriving hiding (D, to)
+#else
+import GHC.Generics hiding (D, to)
+#endif
+import GHC.Int
 
 -- $setup
 -- >>> :set -XTemplateHaskell
