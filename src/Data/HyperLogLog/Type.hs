@@ -47,6 +47,9 @@ module Data.HyperLogLog.Type
   , insertHash
   , intersectionSize
   , cast
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+  , coerceConfig
+#endif
   ) where
 
 #if __GLASGOW_HASKELL__ < 710
@@ -78,6 +81,9 @@ import Generics.Deriving hiding (D, to)
 import GHC.Generics hiding (D, to)
 #endif
 import GHC.Int
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+import Data.Type.Coercion (Coercion(..))
+#endif
 
 -- $setup
 -- >>> :set -XTemplateHaskell
@@ -111,6 +117,15 @@ import GHC.Int
 -- approximate counter.
 newtype HyperLogLog p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
     deriving (Eq, Show, Generic)
+
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+-- | If two types @p@ and @q@ reify the same configuration, then we can coerce
+-- between @'HyperLogLog' p@ and @'HyperLogLog' q@. We do this by building
+-- a hole in the @nominal@ role for the configuration parameter.
+coerceConfig :: forall p q . (ReifiesConfig p, ReifiesConfig q) => Maybe (Coercion (HyperLogLog p) (HyperLogLog q))
+coerceConfig | reflectConfig (Proxy :: Proxy p) == reflectConfig (Proxy :: Proxy q) = Just Coercion
+             | otherwise = Nothing
+#endif
 
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
 type role HyperLogLog nominal
