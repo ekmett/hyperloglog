@@ -15,11 +15,11 @@
 {-# OPTIONS_GHC -fno-float-in #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 706
+#if __GLASGOW_HASKELL__ >= 706
 {-# LANGUAGE PolyKinds                 #-}
 #endif
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+#if __GLASGOW_HASKELL__ >= 707
 {-# LANGUAGE RoleAnnotations #-}
 #endif
 
@@ -47,7 +47,7 @@ module Data.HyperLogLog.Type
   , insertHash
   , intersectionSize
   , cast
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+#if __GLASGOW_HASKELL__ >= 708
   , coerceConfig
 #endif
   ) where
@@ -81,7 +81,7 @@ import Generics.Deriving hiding (D, to)
 import GHC.Generics hiding (D, to)
 #endif
 import GHC.Int
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+#if __GLASGOW_HASKELL__ >= 708
 import Data.Type.Coercion (Coercion(..))
 #endif
 
@@ -118,7 +118,7 @@ import Data.Type.Coercion (Coercion(..))
 newtype HyperLogLog p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
     deriving (Eq, Show, Generic)
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+#if __GLASGOW_HASKELL__ >= 708
 -- | If two types @p@ and @q@ reify the same configuration, then we can coerce
 -- between @'HyperLogLog' p@ and @'HyperLogLog' q@. We do this by building
 -- a hole in the @nominal@ role for the configuration parameter.
@@ -127,7 +127,7 @@ coerceConfig | reflectConfig (Proxy :: Proxy p) == reflectConfig (Proxy :: Proxy
              | otherwise = Nothing
 #endif
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+#if __GLASGOW_HASKELL__ >= 707
 type role HyperLogLog nominal
 #endif
 

@@ -14,17 +14,17 @@
 {-# OPTIONS_GHC -fno-float-in #-}
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 705
+#if __GLASGOW_HASKELL__ >= 705
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
 #define USE_TYPE_LITS 1
 #endif
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 707
+#if __GLASGOW_HASKELL__ >= 707
 #define USE_NEW_TYPE_LITS 1
 #endif
 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 705 && __GLASGOW_HASKELL__ < 707
+#if __GLASGOW_HASKELL__ >= 705 && __GLASGOW_HASKELL__ < 707
 #define USE_OLD_TYPE_LITS 1
 #endif
 
