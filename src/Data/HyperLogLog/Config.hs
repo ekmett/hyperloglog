@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
@@ -54,6 +55,7 @@ module Data.HyperLogLog.Config
   , lim32
   ) where
 
+import Control.DeepSeq
 import Control.Lens
 import Data.Binary
 import Data.Bits
@@ -92,6 +94,9 @@ data Config = Config
   , _alpha      :: {-# UNPACK #-} !Double
   , _bucketMask :: {-# UNPACK #-} !Word32
   } deriving (Eq, Show, Generic)
+
+instance NFData Config where
+  rnf !_config = ()
 
 class HasConfig t where
   config     :: Getter t Config
