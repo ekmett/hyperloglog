@@ -1,7 +1,7 @@
 hyperloglog
 ===========
 
-[![Build Status](https://secure.travis-ci.org/ekmett/hyperloglog.png?branch=master)](http://travis-ci.org/ekmett/hyperloglog)
+[![Hackage](https://img.shields.io/hackage/v/hyperloglog.svg)](https://hackage.haskell.org/package/hyperloglog) [![Build Status](https://secure.travis-ci.org/ekmett/hyperloglog.png?branch=master)](http://travis-ci.org/ekmett/hyperloglog
 
 This package provides a working implementation of HyperLogLog.
 
