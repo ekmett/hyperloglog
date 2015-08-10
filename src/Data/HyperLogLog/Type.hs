@@ -16,7 +16,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
 #if __GLASGOW_HASKELL__ >= 706
-{-# LANGUAGE PolyKinds                 #-}
+{-# LANGUAGE PolyKinds #-}
 #endif
 
 #if __GLASGOW_HASKELL__ >= 707
@@ -60,7 +60,6 @@ import Control.Lens
 import Control.Monad
 import Crypto.MAC.SipHash
 import Data.Approximate.Type
-import Data.Bits
 import Data.Bits.Extras
 import qualified Data.Binary as Binary
 import Data.Binary
@@ -68,6 +67,7 @@ import Data.Bytes.Put (runPutS)
 import Data.Bytes.Serial
 import Data.HyperLogLog.Config
 import Data.Proxy
+import Data.Reflection
 import Data.Semigroup
 import Data.Serialize as Serialize
 import qualified Data.Vector.Unboxed as V
@@ -101,16 +101,16 @@ import Data.Type.Coercion (Coercion(..))
 --
 -- Initialize a new counter:
 --
--- >>> mempty :: HyperLogLog $(3)
+-- >>> mempty :: HyperLogLog 3
 -- HyperLogLog {runHyperLogLog = fromList [0,0,0,0,0,0,0,0]}
 --
--- Please note how you specify a counter size with the @$(n)@
+-- Please note how you specify a counter size with the @n@
 -- invocation. Sizes of up to 16 are valid, with 7 being a
 -- likely good minimum for decent accuracy.
 --
 -- Let's count a list of unique items and get the latest estimate:
 --
--- >>> size (foldr insert mempty [1..10] :: HyperLogLog $(4))
+-- >>> size (foldr insert mempty [1..10] :: HyperLogLog 4)
 -- Approximate {_confidence = 0.9972, _lo = 2, _estimate = 9, _hi = 17}
 --
 -- Note how 'insert' can be used to add new observations to the
@@ -122,8 +122,8 @@ newtype HyperLogLog p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
 -- | If two types @p@ and @q@ reify the same configuration, then we can coerce
 -- between @'HyperLogLog' p@ and @'HyperLogLog' q@. We do this by building
 -- a hole in the @nominal@ role for the configuration parameter.
-coerceConfig :: forall p q . (ReifiesConfig p, ReifiesConfig q) => Maybe (Coercion (HyperLogLog p) (HyperLogLog q))
-coerceConfig | reflectConfig (Proxy :: Proxy p) == reflectConfig (Proxy :: Proxy q) = Just Coercion
+coerceConfig :: forall p q . (Reifies p Integer, Reifies q Integer) => Maybe (Coercion (HyperLogLog p) (HyperLogLog q))
+coerceConfig | reflect (Proxy :: Proxy p) == reflect (Proxy :: Proxy q) = Just Coercion
              | otherwise = Nothing
 #endif
 
@@ -147,13 +147,10 @@ class HasHyperLogLog a p | a -> p where
 instance HasHyperLogLog (HyperLogLog p) p where
   hyperLogLog = id
 
+-- TODO: prism to ensure the sizes are right
 _HyperLogLog :: Iso' (HyperLogLog p) (V.Vector Rank)
 _HyperLogLog = iso runHyperLogLog HyperLogLog
 {-# INLINE _HyperLogLog #-}
-
-instance ReifiesConfig p => HasConfig (HyperLogLog p) where
-  config = to reflectConfig
-  {-# INLINE config #-}
 
 instance Semigroup (HyperLogLog p) where
   HyperLogLog a <> HyperLogLog b = HyperLogLog (V.zipWith max a b)
@@ -161,8 +158,8 @@ instance Semigroup (HyperLogLog p) where
 
 -- The 'Monoid' instance \"should\" just work. Give me two estimators and I
 -- can give you an estimator for the union set of the two.
-instance ReifiesConfig p => Monoid (HyperLogLog p) where
-  mempty = HyperLogLog $ V.replicate (reflectConfig (Proxy :: Proxy p) ^. numBuckets) 0
+instance Reifies p Integer => Monoid (HyperLogLog p) where
+  mempty = HyperLogLog $ V.replicate (numBuckets (reflect (Proxy :: Proxy p))) 0
   {-# INLINE mempty #-}
   mappend = (<>)
   {-# INLINE mappend #-}
@@ -176,45 +173,46 @@ siphash a = h
         (SipHash !h) = hash sipKey bs
 {-# INLINE siphash #-}
 
-insert :: (ReifiesConfig s, Serial a) => a -> HyperLogLog s -> HyperLogLog s
+insert :: (Reifies s Integer, Serial a) => a -> HyperLogLog s -> HyperLogLog s
 insert = insertHash . w32 . siphash
 {-# INLINE insert #-}
 
 -- | Insert a value that has already been hashed by whatever user defined hash function you want.
-insertHash :: ReifiesConfig s => Word32 -> HyperLogLog s -> HyperLogLog s
+insertHash :: Reifies s Integer => Word32 -> HyperLogLog s -> HyperLogLog s
 insertHash h m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
     old <- MV.read x bk
     when (rnk > old) $ MV.write x bk rnk
   ) v where
-  !bk = calcBucket m h
-  !rnk = calcRank m h
+  !n = reflect m
+  !bk = calcBucket n h
+  !rnk = calcRank n h
 {-# INLINE insertHash #-}
 
 -- | Approximate size of our set
-size :: ReifiesConfig p => HyperLogLog p -> Approximate Int64
+size :: Reifies p Integer => HyperLogLog p -> Approximate Int64
 size m@(HyperLogLog bs) = Approximate 0.9972 l expected h where
-  m' = fromIntegral (m^.numBuckets)
+  n = reflect m
+  m' = fromIntegral (numBuckets n)
   numZeros = fromIntegral . V.length . V.filter (== 0) $ bs
-  res = case raw < m^.smallRange of
+  res = case raw < smallRange n of
     True | numZeros > 0 -> m' * log (m' / numZeros)
          | otherwise -> raw
-    False | raw <= m^.interRange -> raw
+    False | raw <= interRange -> raw
           | otherwise -> -1 * lim32 * log (1 - raw / lim32)
-  raw = m^.rawFact * (1 / sm)
+  raw = rawFact n * (1 / sm)
   sm = V.sum $ V.map (\x -> 1 / (2 ^^ x)) bs
   expected = round res
-  sd = err (m^.numBits)
-  err n = 1.04 / sqrt (fromInteger (bit n))
+  sd = 1.04 / sqrt m'
   l = floor $ max (res*(1-3*sd)) 0
   h = ceiling $ res*(1+3*sd)
 {-# INLINE size #-}
 
-intersectionSize :: ReifiesConfig p => [HyperLogLog p] -> Approximate Int64
+intersectionSize :: Reifies p Integer => [HyperLogLog p] -> Approximate Int64
 intersectionSize [] = 0
 intersectionSize (x:xs) = withMin 0 $ size x + intersectionSize xs - intersectionSize (mappend x <$> xs)
 {-# INLINE intersectionSize #-}
 
-cast :: forall p q. (ReifiesConfig p, ReifiesConfig q) => HyperLogLog p -> Maybe (HyperLogLog q)
+cast :: forall p q. (Reifies p Integer, Reifies q Integer) => HyperLogLog p -> Maybe (HyperLogLog q)
 cast old
   | newBuckets <= oldBuckets = Just $ over _HyperLogLog ?? mempty $ V.modify $ \m ->
     V.forM_ (V.indexed $ old^._HyperLogLog) $ \ (i,o) -> do
@@ -223,7 +221,6 @@ cast old
       MV.write m j (max o a)
   | otherwise = Nothing -- TODO?
   where
-  newConfig = reflectConfig (Proxy :: Proxy q)
-  newBuckets = newConfig^.numBuckets
-  oldBuckets = old^.numBuckets
+  newBuckets = numBuckets (reflect (Proxy :: Proxy q))
+  oldBuckets = numBuckets (reflect old)
 {-# INLINE cast #-}

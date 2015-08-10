@@ -19,13 +19,6 @@ module Data.HyperLogLog
   , insert
   , insertHash
   , cast
-  -- * Config
-  , Config
-  , hll
-  -- * ReifiesConfig
-  , ReifiesConfig
-  , reifyConfig
   ) where
 
-import Data.HyperLogLog.Config
 import Data.HyperLogLog.Type

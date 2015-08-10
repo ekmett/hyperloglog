@@ -41,12 +41,12 @@
 module Data.HyperLogLog.Config
   (
   -- * Config
-    Config
-  , HasConfig(..)
-  , hll
-  -- * ReifiesConfig
-  , ReifiesConfig(..)
-  , reifyConfig
+    numBuckets
+  , smallRange
+  , interRange
+  , rawFact
+  , alpha
+  , bucketMask
   -- * Rank
   , Rank
   , calcBucket
@@ -54,26 +54,13 @@ module Data.HyperLogLog.Config
   , lim32
   ) where
 
-import Control.Lens
 import Data.Binary
 import Data.Bits
 import Data.Bits.Extras
-import Data.Bytes.Serial
-import Data.Proxy
-import Data.Reflection
-import Data.Serialize
 import Data.Vector.Serialize ()
 import GHC.Int
 #if __GLASGOW_HASKELL__ < 710
 import GHC.Word
-#endif
-#if __GLASGOW_HASKELL__ < 706
-import Generics.Deriving hiding (to, D)
-#else
-import GHC.Generics hiding (to, D)
-#endif
-#ifdef USE_TYPE_LITS
-import GHC.TypeLits
 #endif
 
 type Rank = Int8
@@ -82,125 +69,42 @@ type Rank = Int8
 -- Config
 ------------------------------------------------------------------------------
 
--- | Constants required for a bucketing factor b
-data Config = Config
-  { _numBits    :: {-# UNPACK #-} !Int
-  , _numBuckets :: {-# UNPACK #-} !Int
-  , _smallRange :: {-# UNPACK #-} !Double
-  , _interRange :: {-# UNPACK #-} !Double
-  , _rawFact    :: {-# UNPACK #-} !Double
-  , _alpha      :: {-# UNPACK #-} !Double
-  , _bucketMask :: {-# UNPACK #-} !Word32
-  } deriving (Eq, Show, Generic)
+lim32 :: Double
+lim32 = fromInteger (bit 32)
+{-# INLINE lim32 #-}
 
-class HasConfig t where
-  config     :: Getter t Config
+numBuckets :: Integer -> Int
+numBuckets b = unsafeShiftL 1 (fromIntegral b)
+{-# INLINE numBuckets #-}
 
-  numBits    :: Getter t Int
-  numBits     = config . to _numBits
+smallRange :: Integer -> Double
+smallRange b = 5/2 * fromIntegral (numBuckets b)
+{-# INLINE smallRange #-}
 
-  numBuckets :: Getter t Int
-  numBuckets  = config . to _numBuckets
+interRange :: Double
+interRange = lim32 / 30
+{-# INLINE interRange #-}
 
-  smallRange :: Getter t Double
-  smallRange  = config . to _smallRange
+rawFact :: Integer -> Double
+rawFact b = alpha b * m * m where
+  m = fromIntegral (numBuckets b)
+{-# INLINE rawFact #-}
 
-  interRange :: Getter t Double
-  interRange  = config . to _interRange
+alpha :: Integer -> Double
+alpha b = 0.7213 / (1 + 1.079 / fromIntegral (numBuckets b))
+{-# INLINE alpha #-}
 
-  rawFact    :: Getter t Double
-  rawFact     = config . to _rawFact
-
-  alpha      :: Getter t Double
-  alpha       = config . to _alpha
-
-  bucketMask :: Getter t Word32
-  bucketMask  = config . to _bucketMask
-
-instance HasConfig Config where
-  config = id
-  {-# INLINE config #-}
-
-instance Serialize Config -- serialize as a number?
-
-instance Binary Config where
-  put = serialize
-  get = deserialize
-
-instance Serial Config
-
--- | Precalculate constants for a given bucketing factor b
-hll :: Int -> Config
-hll b = Config
-  { _numBits = b
-  , _numBuckets = m
-  , _smallRange = 5/2 * m'
-  , _interRange = lim32 / 30
-  , _rawFact = a * m' * m'
-  , _alpha = a
-  , _bucketMask = bit b - 1
-  } where
-  m = bit b
-  m' = fromIntegral m
-  a = 0.7213 / (1 + 1.079 / m')
-{-# INLINE hll #-}
-
-------------------------------------------------------------------------------
--- ReifiesConfig
-------------------------------------------------------------------------------
-
-class ReifiesConfig o where
-  reflectConfig :: p o -> Config
-
-#ifdef USE_NEW_TYPE_LITS
-instance KnownNat n => ReifiesConfig (n :: Nat) where
-  reflectConfig _ = hll $ fromInteger $ natVal (Proxy :: Proxy n)
-  {-# INLINE reflectConfig #-}
-#endif
-
-#ifdef USE_OLD_TYPE_LITS
-instance SingRep n Integer => ReifiesConfig (n :: Nat) where
-  reflectConfig _ = hll $ fromInteger $ withSing $ \(x :: Sing n) -> fromSing x
-  {-# INLINE reflectConfig #-}
-#endif
-
-data ReifiedConfig (s :: *)
-
-retagReifiedConfig :: (Proxy s -> a) -> proxy (ReifiedConfig s) -> a
-retagReifiedConfig f _ = f Proxy
-{-# INLINE retagReifiedConfig #-}
-
-instance Reifies s Config => ReifiesConfig (ReifiedConfig s) where
-  reflectConfig = retagReifiedConfig reflect
-  {-# INLINE reflectConfig #-}
-
-reifyConfig :: Int -> (forall (o :: *). ReifiesConfig o => Proxy o -> r) -> r
-reifyConfig i f = reify (hll i) (go f) where
-  go :: (Proxy (ReifiedConfig o) -> a) -> proxy o -> a
-  go g _ = g Proxy
-{-# INLINE reifyConfig #-}
-
-instance Reifies n Int => ReifiesConfig (D n) where
-  reflectConfig = hll . reflect
-  {-# INLINE reflectConfig #-}
-
--- this way we only get instances for positive natural numbers
-instance Reifies n Int => ReifiesConfig (SD n) where
-  reflectConfig = hll . reflect
-  {-# INLINE reflectConfig #-}
-
+bucketMask :: Integer -> Word32
+bucketMask b = fromIntegral (numBuckets b) - 1
+  
 ------------------------------------------------------------------------------
 -- Util
 ------------------------------------------------------------------------------
 
-calcBucket :: HasConfig t => t -> Word32 -> Int
-calcBucket t w = fromIntegral (w .&. t^.bucketMask)
+calcBucket :: Integer -> Word32 -> Int
+calcBucket t w = fromIntegral (w .&. bucketMask t)
 {-# INLINE calcBucket #-}
 
-calcRank :: HasConfig t => t -> Word32 -> Int8
-calcRank t w = fromIntegral $ rank $ shiftR w $ t^.numBits
+calcRank :: Integer -> Word32 -> Int8
+calcRank t w = fromIntegral $ rank $ shiftR w $ fromIntegral t
 {-# INLINE calcRank #-}
-
-lim32 :: Double
-lim32 = fromInteger (bit 32)
-{-# INLINE lim32 #-}
