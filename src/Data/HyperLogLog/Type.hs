@@ -5,7 +5,6 @@
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE FunctionalDependencies    #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE TypeFamilies              #-}
