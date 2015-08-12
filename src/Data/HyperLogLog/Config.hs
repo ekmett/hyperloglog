@@ -1,14 +1,5 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -fno-cse #-}
 {-# OPTIONS_GHC -fno-full-laziness #-}
 {-# OPTIONS_GHC -fno-float-in #-}
@@ -17,18 +8,8 @@
 #if __GLASGOW_HASKELL__ >= 705
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
-#define USE_TYPE_LITS 1
 #endif
 
-#if __GLASGOW_HASKELL__ >= 707
-#define USE_NEW_TYPE_LITS 1
-#endif
-
-#if __GLASGOW_HASKELL__ >= 705 && __GLASGOW_HASKELL__ < 707
-#define USE_OLD_TYPE_LITS 1
-#endif
-
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 --------------------------------------------------------------------
 -- |
 -- Copyright :  (c) Edward Kmett 2013-2015
