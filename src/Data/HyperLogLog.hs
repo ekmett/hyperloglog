@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 --------------------------------------------------------------------
 -- |
 -- Copyright :  (c) Edward Kmett 2013-2015
@@ -19,6 +20,9 @@ module Data.HyperLogLog
   , insert
   , insertHash
   , cast
+#if __GLASGOW_HASKELL__ >= 708
+  , coerceConfig
+#endif
   ) where
 
 import Data.HyperLogLog.Type
