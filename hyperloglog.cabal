@@ -42,6 +42,10 @@ flag test-doctests
   default: True
   manual: True
 
+flag herbie
+  default: False
+  manual: True
+
 library
   build-depends:
     approximate               >= 0.2.1    && < 1,
@@ -64,6 +68,11 @@ library
     siphash                   >= 1.0.3    && < 2,
     tagged                    >= 0.4.5    && < 1,
     vector                    >= 0.9      && < 0.11
+
+  if flag(herbie)
+    build-depends: HerbiePlugin >= 0.1 && < 0.2
+    cpp-options: -DHERBIE
+    ghc-options: -fplugin=Herbie
 
   if impl(ghc < 7.6)
     build-depends: generic-deriving >= 1.4 && < 1.9
