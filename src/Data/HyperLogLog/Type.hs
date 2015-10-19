@@ -194,11 +194,11 @@ size m@(HyperLogLog bs) = Approximate 0.9972 l expected h where
   m' = fromIntegral (numBuckets n)
   numZeros = fromIntegral . V.length . V.filter (== 0) $ bs
   res = case raw < smallRange n of
-    True -- | numZeros > 0 -> m' * log (m' / numZeros) -- 13.47 bits max error
+    True -- numZeros > 0 -> m' * log (m' / numZeros) -- 13.47 bits max error
          | numZeros > 0 -> m' / 1 / (log m' - log numZeros) -- 6.47 bits max error
          | otherwise -> raw
     False | raw <= interRange -> raw
-          -- | otherwise -> -1 * lim32 * log (1 - raw / lim32) -- 44 bits max error
+          -- otherwise -> -1 * lim32 * log (1 - raw / lim32) -- 44 bits max error
           | raw / lim32 < -1.7563532969399233e-6 -> - log (1 - (raw / lim32)) * lim32 -- 5.39 bits max error
           | otherwise -> raw + (raw / lim32) * raw
 
