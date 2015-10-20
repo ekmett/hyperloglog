@@ -91,6 +91,7 @@ import Data.Type.Coercion (Coercion(..))
 -- >>> import Control.Lens
 -- >>> import Data.Reflection
 -- >>> import Data.Monoid
+-- >>> import qualified Data.Vector.Unboxed as V
 
 ------------------------------------------------------------------------------
 -- HyperLogLog
@@ -100,8 +101,8 @@ import Data.Type.Coercion (Coercion(..))
 --
 -- Initialize a new counter:
 --
--- >>> mempty :: HyperLogLog 3
--- HyperLogLog {runHyperLogLog = fromList [0,0,0,0,0,0,0,0]}
+-- >>> runHyperLogLog (mempty :: HyperLogLog 3) == V.fromList [0,0,0,0,0,0,0,0]
+-- True
 --
 -- Please note how you specify a counter size with the @n@
 -- invocation. Sizes of up to 16 are valid, with 7 being a
@@ -194,12 +195,12 @@ size m@(HyperLogLog bs) = Approximate 0.9972 l expected h where
   m' = fromIntegral (numBuckets n)
   numZeros = fromIntegral . V.length . V.filter (== 0) $ bs
   res = case raw < smallRange n of
-    True -- numZeros > 0 -> m' * log (m' / numZeros) -- 13.47 bits max error
-         | numZeros > 0 -> m' / 1 / (log m' - log numZeros) -- 6.47 bits max error
+    True | numZeros > 0 -> m' * log (m' / numZeros) -- 13.47 bits max error
+         -- numZeros > 0 -> m' / 1 / (log m' - log numZeros) -- 6.47 bits max error
          | otherwise -> raw
     False | raw <= interRange -> raw
           -- otherwise -> -1 * lim32 * log (1 - raw / lim32) -- 44 bits max error
-          | raw / lim32 < -1.7563532969399233e-6 -> - log (1 - (raw / lim32)) * lim32 -- 5.39 bits max error
+          -- raw / lim32 < -1.7563532969399233e-6 -> - log (1 - (raw / lim32)) * lim32 -- 5.39 bits max error
           | otherwise -> raw + (raw / lim32) * raw
 
   raw = rawFact n * (1 / sm)
