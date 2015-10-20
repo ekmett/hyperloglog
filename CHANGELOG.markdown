@@ -1,6 +1,16 @@
+0.4.0.3
+-------
+* Fixed doctest issues caused by `vector` 0.11
+* Unfortunately the `herbie` changes turned out to be flawed (due to issue mikeizbicki/HerbiePlugin#8). Rolling them back for now.
+
+0.4.0.2
+-------
+* Fixed a haddock issue caused by the comments in the herbie code.
+
 0.4.0.1
 -------
 * Added `vector` 0.11 support.
+* Incorporated some changes suggested by the HerbiePlugin.
 
 0.3.4
 -----
