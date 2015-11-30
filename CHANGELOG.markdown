@@ -1,3 +1,7 @@
+0.4.0.4
+-------
+* Support `cereal` 0.5 and `safecopy` 0.9.
+
 0.4.0.3
 -------
 * Fixed doctest issues caused by `vector` 0.11
