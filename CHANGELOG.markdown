@@ -1,3 +1,8 @@
+0.4.0.5
+-------
+
+* Drop (unused) `hashable-extras` dependency
+
 0.4.0.4
 -------
 * Support `cereal` 0.5 and `safecopy` 0.9.
