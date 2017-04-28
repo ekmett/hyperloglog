@@ -4,6 +4,7 @@ next
   with `Cabal-2.0`, and makes the `doctest`s work with `cabal new-build` and
   sandboxes.
 * Drop (unused) `hashable-extras` dependency
+* Add `NFData` instance for `HyperLogLog`
 
 0.4.0.4
 -------
