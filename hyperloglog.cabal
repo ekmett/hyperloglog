@@ -80,7 +80,7 @@ library
     ghc-options: -fplugin=Herbie
 
   if impl(ghc < 7.6)
-    build-depends: generic-deriving >= 1.4 && < 1.9
+    build-depends: ghc-prim
 
   exposed-modules:
     Data.HyperLogLog

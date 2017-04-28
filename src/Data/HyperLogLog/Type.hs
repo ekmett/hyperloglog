@@ -76,11 +76,7 @@ import qualified Data.Vector.Unboxed.Mutable as MV
 #if __GLASGOW_HASKELL__ < 710
 import Data.Word
 #endif
-#if __GLASGOW_HASKELL__ < 706
-import Generics.Deriving hiding (D, to)
-#else
 import GHC.Generics hiding (D, to)
-#endif
 import GHC.Int
 #if __GLASGOW_HASKELL__ >= 708
 import Data.Type.Coercion (Coercion(..))
