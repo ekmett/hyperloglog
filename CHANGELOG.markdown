@@ -5,6 +5,7 @@ next
   sandboxes.
 * Drop (unused) `hashable-extras` dependency
 * Add `NFData` instance for `HyperLogLog`
+* Require GHC 7.8 or later
 
 0.4.0.4
 -------
