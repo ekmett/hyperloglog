@@ -106,5 +106,6 @@ test-suite doctests
       doctest        >= 0.9.1,
       filepath,
       generic-deriving,
+      hyperloglog,
       semigroups     >= 0.9,
       simple-reflect >= 0.3.1
