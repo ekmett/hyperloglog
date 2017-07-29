@@ -85,7 +85,7 @@ import Data.Type.Coercion (Coercion(..))
 -- $setup
 -- >>> :set -XTemplateHaskell
 -- >>> :set -XDataKinds
--- >>> :load Data.HyperLogLog
+-- >>> import Data.HyperLogLog
 -- >>> import Control.Lens
 -- >>> import Data.Reflection
 -- >>> import Data.Monoid
