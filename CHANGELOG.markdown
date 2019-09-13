@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Remove unused `safecopy` dependency.
+
 0.4.2
 -----
 * Add a library dependency on the `doctests` test suite
