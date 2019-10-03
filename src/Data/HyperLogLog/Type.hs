@@ -52,10 +52,6 @@ module Data.HyperLogLog.Type
 #endif
   ) where
 
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative
-#endif
-
 import Control.DeepSeq (NFData (..))
 import Control.Lens
 import Control.Monad
@@ -69,17 +65,24 @@ import Data.Bytes.Serial
 import Data.HyperLogLog.Config
 import Data.Proxy
 import Data.Reflection
-import Data.Semigroup
 import Data.Serialize as Serialize
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as MV
-#if __GLASGOW_HASKELL__ < 710
-import Data.Word
-#endif
 import GHC.Generics hiding (D, to)
 import GHC.Int
-#if __GLASGOW_HASKELL__ >= 708
+
+#if MIN_VERSION_base(4,7,0)
 import Data.Type.Coercion (Coercion(..))
+#endif
+
+#if !(MIN_VERSION_base(4,8,0))
+import Control.Applicative
+import Data.Monoid (Monoid(..))
+import Data.Word
+#endif
+
+#if !(MIN_VERSION_base(4,11,0))
+import Data.Semigroup (Semigroup(..))
 #endif
 
 -- $setup
