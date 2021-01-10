@@ -30,12 +30,9 @@ description:
   in around 1.5k of memory.
 
 extra-source-files:
-  .travis.yml
   .ghci
   .gitignore
   .vim.custom
-  travis/cabal-apt-install
-  travis/config
   AUTHORS.markdown
   README.markdown
   CHANGELOG.markdown
