@@ -6,22 +6,16 @@
 {-# LANGUAGE FunctionalDependencies    #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving#-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
+{-# LANGUAGE PolyKinds                 #-}
 {-# LANGUAGE RankNTypes                #-}
+{-# LANGUAGE RoleAnnotations           #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE UndecidableInstances      #-}
 {-# LANGUAGE MonoLocalBinds            #-}
 {-# OPTIONS_GHC -fno-cse #-}
 {-# OPTIONS_GHC -fno-full-laziness #-}
 {-# OPTIONS_GHC -fno-float-in #-}
-{-# OPTIONS_GHC -fno-warn-unused-binds #-}
-
-#if __GLASGOW_HASKELL__ >= 706
-{-# LANGUAGE PolyKinds #-}
-#endif
-
-#if __GLASGOW_HASKELL__ >= 707
-{-# LANGUAGE RoleAnnotations #-}
-#endif
+{-# OPTIONS_GHC -Wno-unused-binds #-}
 
 --------------------------------------------------------------------
 -- |
@@ -47,9 +41,7 @@ module Data.HyperLogLog.Type
   , insertHash
   , intersectionSize
   , cast
-#if __GLASGOW_HASKELL__ >= 708
   , coerceConfig
-#endif
   ) where
 
 import Control.DeepSeq (NFData (..))
@@ -66,20 +58,11 @@ import Data.HyperLogLog.Config
 import Data.Proxy
 import Data.Reflection
 import Data.Serialize as Serialize
+import Data.Type.Coercion (Coercion(..))
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as MV
 import GHC.Generics hiding (D, to)
 import GHC.Int
-
-#if MIN_VERSION_base(4,7,0)
-import Data.Type.Coercion (Coercion(..))
-#endif
-
-#if !(MIN_VERSION_base(4,8,0))
-import Control.Applicative
-import Data.Monoid (Monoid(..))
-import Data.Word
-#endif
 
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup (Semigroup(..))
@@ -118,19 +101,14 @@ import Data.Semigroup (Semigroup(..))
 -- approximate counter.
 newtype HyperLogLog p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
     deriving (Eq, Show, Generic, NFData)
+type role HyperLogLog nominal
 
-#if __GLASGOW_HASKELL__ >= 708
 -- | If two types @p@ and @q@ reify the same configuration, then we can coerce
 -- between @'HyperLogLog' p@ and @'HyperLogLog' q@. We do this by building
 -- a hole in the @nominal@ role for the configuration parameter.
 coerceConfig :: forall p q . (Reifies p Integer, Reifies q Integer) => Maybe (Coercion (HyperLogLog p) (HyperLogLog q))
 coerceConfig | reflect (Proxy :: Proxy p) == reflect (Proxy :: Proxy q) = Just Coercion
              | otherwise = Nothing
-#endif
-
-#if __GLASGOW_HASKELL__ >= 707
-type role HyperLogLog nominal
-#endif
 
 instance Serialize (HyperLogLog p)
 
