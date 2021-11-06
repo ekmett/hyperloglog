@@ -1,14 +1,10 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-cse #-}
 {-# OPTIONS_GHC -fno-full-laziness #-}
 {-# OPTIONS_GHC -fno-float-in #-}
-{-# OPTIONS_GHC -fno-warn-unused-binds #-}
-
-#if __GLASGOW_HASKELL__ >= 705
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE PolyKinds #-}
-#endif
+{-# OPTIONS_GHC -Wno-unused-binds #-}
 
 --------------------------------------------------------------------
 -- |
@@ -40,9 +36,6 @@ import Data.Bits
 import Data.Bits.Extras
 import Data.Vector.Serialize ()
 import GHC.Int
-#if __GLASGOW_HASKELL__ < 710
-import GHC.Word
-#endif
 
 type Rank = Int8
 
