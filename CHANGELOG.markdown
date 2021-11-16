@@ -1,6 +1,7 @@
 next [????.??.??]
 -----------------
 * Drop support for pre-8.0 versions of GHC.
+* Allow building with `hashable-1.4.*`.
 
 0.4.4 [2021.02.17]
 ------------------
