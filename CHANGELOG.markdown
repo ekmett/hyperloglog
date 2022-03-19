@@ -1,3 +1,9 @@
+next [????.??.??]
+-----------------
+* Remove the `siphash` dependency. Because `siphash` no longer builds on
+  GHC 9.2+, we instead bundle the code alongside `hyperloglog`. This allows
+  `hyperloglog` to build with 9.2.
+
 0.4.5 [2021.11.16]
 ------------------
 * Drop support for pre-8.0 versions of GHC.
