@@ -25,9 +25,7 @@ module Crypto.MAC.SipHash
 
 import Data.Word
 import Data.Bits
-import Data.ByteString (ByteString)
 import Data.ByteString.Internal
-import qualified Data.ByteString as B
 import Control.Monad
 
 import Foreign.ForeignPtr
@@ -112,6 +110,7 @@ hashWith c d key (PS ps s fl) = unsafeDupablePerformIO $ withForeignPtr ps (\ptr
                                     .|. (to64 v2 `unsafeShiftL` 16)
                                     .|. (to64 v1 `unsafeShiftL` 8)
                                     .|. to64 v0)
+                    _ -> error "siphash: internal error: cannot happen"
 
         {-# INLINE to64 #-}
         to64 :: Word8 -> Word64
