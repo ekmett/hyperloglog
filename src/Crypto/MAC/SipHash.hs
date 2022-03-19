@@ -34,6 +34,7 @@ import Foreign.ForeignPtr
 import Foreign.Ptr
 import Foreign.Storable
 import System.Endian (fromLE64)
+import System.IO.Unsafe (unsafeDupablePerformIO)
 
 -- | SigHash Key
 data SipKey = SipKey {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
@@ -50,7 +51,7 @@ hash = hashWith 2 4
 
 -- | same as 'hash', except also specifies the number of sipround iterations for compression and digest.
 hashWith :: Int -> Int -> SipKey -> ByteString -> SipHash
-hashWith c d key (PS ps s fl) = inlinePerformIO $ withForeignPtr ps (\ptr -> runHash (initSip key) (ptr `plusPtr` s) fl)
+hashWith c d key (PS ps s fl) = unsafeDupablePerformIO $ withForeignPtr ps (\ptr -> runHash (initSip key) (ptr `plusPtr` s) fl)
   where runHash !st !ptr l
             | l > 7     = fromLE64 `fmap` peek (castPtr ptr) >>= \v -> runHash (process st v) (ptr `plusPtr` 8) (l-8)
             | otherwise = do
