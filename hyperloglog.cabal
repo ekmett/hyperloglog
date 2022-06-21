@@ -63,7 +63,7 @@ library
     semigroupoids             >= 4        && < 6,
     semigroups                >= 0.8.4    && < 1,
     tagged                    >= 0.4.5    && < 1,
-    vector                    >= 0.9      && < 0.13
+    vector                    >= 0.9      && < 0.14
 
   if flag(herbie)
     build-depends: HerbiePlugin >= 0.1 && < 0.2
