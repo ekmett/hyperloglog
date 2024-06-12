@@ -158,10 +158,11 @@ insert = insertHash . w32 . siphash
 
 -- | Insert a value that has already been hashed by whatever user defined hash function you want.
 insertHash :: Reifies s Integer => Word32 -> HyperLogLog s -> HyperLogLog s
-insertHash h m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
-    old <- MV.read x bk
-    when (rnk > old) $ MV.write x bk rnk
-  ) v where
+insertHash h m@(HyperLogLog v) = if rnk > old
+  then HyperLogLog $ V.modify (\x -> MV.write x bk rnk) v
+  else m
+  where
+  !old = V.unsafeIndex v bk
   !n = reflect m
   !bk = calcBucket n h
   !rnk = calcRank n h
