@@ -5,6 +5,10 @@ hyperloglog
 
 This package provides a working implementation of HyperLogLog.
 
+**This library should not be used for cryptographic or security applications**,
+as this implementation of HyperLogLog does not generate keys from a
+cryptographically secure source of randomness.
+
 Contact Information
 -------------------
 

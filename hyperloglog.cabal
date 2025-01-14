@@ -32,6 +32,10 @@ description:
   .
   Notably it can be used to approximate a set of several billion elements with 1-2% inaccuracy
   in around 1.5k of memory.
+  .
+  __This library should not be used for cryptographic or security
+  applications__, as this implementation of HyperLogLog does not generate keys
+  from a cryptographically secure source of randomness.
 
 extra-source-files:
   .ghci

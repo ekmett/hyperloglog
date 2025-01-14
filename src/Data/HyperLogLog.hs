@@ -8,6 +8,10 @@
 --
 -- See the original paper for details:
 -- <http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf>
+--
+-- __This library should not be used for cryptographic or security
+-- applications__, as this implementation of HyperLogLog does not
+-- generate keys from a cryptographically secure source of randomness.
 --------------------------------------------------------------------
 module Data.HyperLogLog
   (
