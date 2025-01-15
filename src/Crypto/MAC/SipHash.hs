@@ -36,6 +36,7 @@ import System.IO.Unsafe (unsafeDupablePerformIO)
 
 -- | SigHash Key
 data SipKey = SipKey {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
+  deriving (Show,Read,Eq,Ord)
 
 -- | Siphash tag value
 newtype SipHash = SipHash Word64

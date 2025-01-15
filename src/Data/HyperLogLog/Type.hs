@@ -19,7 +19,7 @@
 
 --------------------------------------------------------------------
 -- |
--- Copyright :  (c) Edward Kmett 2013-2015
+-- Copyright :  (c) Edward Kmett 2013-2025
 -- License   :  BSD3
 -- Maintainer:  Edward Kmett <ekmett@gmail.com>
 -- Stability :  experimental
@@ -34,7 +34,11 @@
 module Data.HyperLogLog.Type
   (
   -- * HyperLogLog
-    HyperLogLog(..)
+    DefaultSipKey
+  , DefaultHyperLogLog
+  , SipKey
+  , reifySipKey
+  , HyperLogLog(..)
   , HasHyperLogLog(..)
   , size
   , insert
@@ -63,6 +67,7 @@ import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as MV
 import GHC.Generics hiding (D, to)
 import GHC.Int
+import GHC.Types (Type)
 
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup (Semigroup(..))
@@ -85,7 +90,7 @@ import Data.Semigroup (Semigroup(..))
 --
 -- Initialize a new counter:
 --
--- >>> runHyperLogLog (mempty :: HyperLogLog 3) == V.fromList [0,0,0,0,0,0,0,0]
+-- >>> runHyperLogLog (mempty :: DefaultHyperLogLog 3) == V.fromList [0,0,0,0,0,0,0,0]
 -- True
 --
 -- Please note how you specify a counter size with the @n@
@@ -94,70 +99,85 @@ import Data.Semigroup (Semigroup(..))
 --
 -- Let's count a list of unique items and get the latest estimate:
 --
--- >>> size (foldr insert mempty [1..10] :: HyperLogLog 4)
+-- >>> size (foldr insert mempty [1..10] :: DefaultHyperLogLog 4)
 -- Approximate {_confidence = 0.9972, _lo = 2, _estimate = 9, _hi = 17}
 --
 -- Note how 'insert' can be used to add new observations to the
 -- approximate counter.
-newtype HyperLogLog p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
+newtype HyperLogLog s p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
     deriving (Eq, Show, Generic, NFData)
-type role HyperLogLog nominal
+type role HyperLogLog nominal nominal
+
+data DefaultSipKey = DefaultSipKey
+
+instance Reifies DefaultSipKey SipKey where
+  reflect _ = SipKey 4 7
+
+type DefaultHyperLogLog = HyperLogLog DefaultSipKey
+
+-- promote a SipKey to the type level for use as part of a HyperLogLog type
+reifySipKey :: Word64 -> Word64 -> (forall (s :: Type). Reifies s SipKey => Proxy s -> r) -> r
+reifySipKey m n k = reify (SipKey m n) k
 
 -- | If two types @p@ and @q@ reify the same configuration, then we can coerce
 -- between @'HyperLogLog' p@ and @'HyperLogLog' q@. We do this by building
 -- a hole in the @nominal@ role for the configuration parameter.
-coerceConfig :: forall p q . (Reifies p Integer, Reifies q Integer) => Maybe (Coercion (HyperLogLog p) (HyperLogLog q))
-coerceConfig | reflect (Proxy :: Proxy p) == reflect (Proxy :: Proxy q) = Just Coercion
+coerceConfig :: forall p q r s. (Reifies p Integer, Reifies q Integer, Reifies r SipKey, Reifies s SipKey) => Maybe (Coercion (HyperLogLog r p) (HyperLogLog s q))
+coerceConfig | reflect (Proxy :: Proxy p) == reflect (Proxy :: Proxy q)
+             , reflect (Proxy :: Proxy r) == reflect (Proxy :: Proxy s) = Just Coercion
              | otherwise = Nothing
 
-instance Serialize (HyperLogLog p)
+instance Serialize (HyperLogLog s p)
 
-instance Serial (HyperLogLog p) where
+instance Serial (HyperLogLog s p) where
   serialize (HyperLogLog v) = serialize (V.toList v)
   deserialize = liftM (HyperLogLog . V.fromList) deserialize
 
-instance Binary (HyperLogLog p) where
+instance Binary (HyperLogLog s p) where
   put (HyperLogLog v) = Binary.put (V.toList v)
   get = fmap (HyperLogLog . V.fromList) Binary.get
 
-class HasHyperLogLog a p | a -> p where
-  hyperLogLog :: Lens' a (HyperLogLog p)
+class HasHyperLogLog a s p | a -> s p where
+  hyperLogLog :: Lens' a (HyperLogLog s p)
 
-instance HasHyperLogLog (HyperLogLog p) p where
+instance HasHyperLogLog (HyperLogLog s p) s p where
   hyperLogLog = id
 
 -- TODO: prism to ensure the sizes are right
-_HyperLogLog :: Iso' (HyperLogLog p) (V.Vector Rank)
+_HyperLogLog :: Iso' (HyperLogLog s p) (V.Vector Rank)
 _HyperLogLog = iso runHyperLogLog HyperLogLog
 {-# INLINE _HyperLogLog #-}
 
-instance Semigroup (HyperLogLog p) where
+instance Semigroup (HyperLogLog s p) where
   HyperLogLog a <> HyperLogLog b = HyperLogLog (V.zipWith max a b)
   {-# INLINE (<>) #-}
 
 -- The 'Monoid' instance \"should\" just work. Give me two estimators and I
 -- can give you an estimator for the union set of the two.
-instance Reifies p Integer => Monoid (HyperLogLog p) where
+instance Reifies p Integer => Monoid (HyperLogLog s p) where
   mempty = HyperLogLog $ V.replicate (numBuckets (reflect (Proxy :: Proxy p))) 0
   {-# INLINE mempty #-}
   mappend = (<>)
   {-# INLINE mappend #-}
 
-sipKey :: SipKey
-sipKey = SipKey 4 7
+--sipKey :: SipKey
+--sipKey = SipKey 4 7
 
-siphash :: Serial a => a -> Word64
-siphash a = h
+defaultSipKey :: SipKey
+defaultSipKey = SipKey 4 7
+
+siphash :: Serial a => SipKey -> a -> Word64
+siphash k a = h
   where !bs = runPutS (serialize a)
-        (SipHash !h) = hash sipKey bs
+        (SipHash !h) = hash k bs
 {-# INLINE siphash #-}
 
-insert :: (Reifies s Integer, Serial a) => a -> HyperLogLog s -> HyperLogLog s
-insert = insertHash . w32 . siphash
+insert :: forall s p a. (Reifies s SipKey, Reifies p Integer, Serial a) => a -> HyperLogLog s p -> HyperLogLog s p
+insert = insertHash . w32 . siphash (reflect (Proxy :: Proxy s))
 {-# INLINE insert #-}
 
 -- | Insert a value that has already been hashed by whatever user defined hash function you want.
-insertHash :: Reifies s Integer => Word32 -> HyperLogLog s -> HyperLogLog s
+insertHash :: Reifies p Integer => Word32 -> HyperLogLog s p -> HyperLogLog s p
 insertHash h m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
     old <- MV.read x bk
     when (rnk > old) $ MV.write x bk rnk
@@ -168,7 +188,7 @@ insertHash h m@(HyperLogLog v) = HyperLogLog $ V.modify (\x -> do
 {-# INLINE insertHash #-}
 
 -- | Approximate size of our set
-size :: Reifies p Integer => HyperLogLog p -> Approximate Int64
+size :: Reifies p Integer => HyperLogLog s p -> Approximate Int64
 size m@(HyperLogLog bs) = Approximate 0.9972 l expected h where
   n = reflect m
   m' = fromIntegral (numBuckets n)
@@ -193,12 +213,12 @@ size m@(HyperLogLog bs) = Approximate 0.9972 l expected h where
 {-# ANN size "NoHerbie" #-}
 #endif
 
-intersectionSize :: Reifies p Integer => [HyperLogLog p] -> Approximate Int64
+intersectionSize :: Reifies p Integer => [HyperLogLog s p] -> Approximate Int64
 intersectionSize [] = 0
 intersectionSize (x:xs) = withMin 0 $ size x + intersectionSize xs - intersectionSize (mappend x <$> xs)
 {-# INLINE intersectionSize #-}
 
-cast :: forall p q. (Reifies p Integer, Reifies q Integer) => HyperLogLog p -> Maybe (HyperLogLog q)
+cast :: forall p q s. (Reifies p Integer, Reifies q Integer) => HyperLogLog s p -> Maybe (HyperLogLog s q)
 cast old
   | newBuckets <= oldBuckets = Just $ over _HyperLogLog ?? mempty $ V.modify $ \m ->
     V.forM_ (V.indexed $ old^._HyperLogLog) $ \ (i,o) -> do
