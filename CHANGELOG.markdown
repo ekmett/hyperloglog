@@ -15,6 +15,7 @@
 * Export the `SipKey` data type and define a `reifySipKey` function to promote
   a `SipKey` value to the type level.
 * Define a `type DefaultHyperLogLog = HyperLogLog DefaultSipKey` type synonym.
+* Drop support for GHC 8.0.
 
 0.4.6 [2022.04.18]
 ------------------
