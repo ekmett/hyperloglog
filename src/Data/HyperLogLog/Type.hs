@@ -10,6 +10,7 @@
 {-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE RoleAnnotations           #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
+{-# LANGUAGE TypeApplications          #-}
 {-# LANGUAGE UndecidableInstances      #-}
 {-# LANGUAGE MonoLocalBinds            #-}
 {-# OPTIONS_GHC -fno-cse #-}
@@ -39,6 +40,7 @@ module Data.HyperLogLog.Type
   , SipKey
   , reifySipKey
   , HyperLogLog(..)
+  , generateHyperLogLog
   , HasHyperLogLog(..)
   , size
   , insert
@@ -56,6 +58,8 @@ import Data.Approximate.Type
 import Data.Bits.Extras
 import qualified Data.Binary as Binary
 import Data.Binary
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Bytes.Get as Bytes (getWord64host, runGetL)
 import Data.Bytes.Put (runPutS)
 import Data.Bytes.Serial
 import Data.HyperLogLog.Config
@@ -68,12 +72,14 @@ import qualified Data.Vector.Unboxed.Mutable as MV
 import GHC.Generics hiding (D, to)
 import GHC.Int
 import GHC.Types (Type)
+import System.Entropy (getEntropy)
 
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup (Semigroup(..))
 #endif
 
 -- $setup
+-- >>> :set -XScopedTypeVariables
 -- >>> :set -XTemplateHaskell
 -- >>> :set -XDataKinds
 -- >>> import Data.HyperLogLog
@@ -104,7 +110,22 @@ import Data.Semigroup (Semigroup(..))
 --
 -- Note how 'insert' can be used to add new observations to the
 -- approximate counter.
-newtype HyperLogLog s p = HyperLogLog { runHyperLogLog :: V.Vector Rank }
+--
+-- The @s@ type parameter configures the 'SipKey' that is passed to the hash
+-- function when 'insert'ing a new value. Note that if cryptographic security is
+-- a primary consideration, it is recommended that you create 'HyperLogLog'
+-- values using 'generateHyperLogLog' so that the 'SipKey' is randomly
+-- generated using system entropy. In contrast, the 'HyperLogLog' data
+-- constructor and the 'mempty' method allow constructing 'HyperLogLog' values
+-- with fixed 'SipKey's, which can result in exponentially inaccurate estimates
+-- if exploited by an adversary. (See <https://eprint.iacr.org/2021/1139>.)
+newtype HyperLogLog s p =
+  -- | Construct a 'HyperLogLog' value directly from a 'V.Vector'.
+  --
+  -- Note that using this data constructor directly permits the @s@ type
+  -- parameter to be a fixed 'SipKey', which can have cryptographic security
+  -- implications. See the Haddocks for 'HyperLogLog' for more details.
+  HyperLogLog { runHyperLogLog :: V.Vector Rank }
     deriving (Eq, Show, Generic, NFData)
 type role HyperLogLog nominal nominal
 
@@ -115,13 +136,37 @@ instance Reifies DefaultSipKey SipKey where
 
 type DefaultHyperLogLog = HyperLogLog DefaultSipKey
 
--- promote a SipKey to the type level for use as part of a HyperLogLog type
+-- | Promote a 'SipKey' to the type level for use as part of a 'HyperLogLog'
+-- type.
 reifySipKey :: Word64 -> Word64 -> (forall (s :: Type). Reifies s SipKey => Proxy s -> r) -> r
 reifySipKey m n k = reify (SipKey m n) k
 
--- | If two types @p@ and @q@ reify the same configuration, then we can coerce
--- between @'HyperLogLog' p@ and @'HyperLogLog' q@. We do this by building
--- a hole in the @nominal@ role for the configuration parameter.
+-- | Generate a fresh 'HyperLogLog' value using a randomly generated 'SipKey':
+--
+-- >>> generateHyperLogLog $ \(m :: HyperLogLog s 3) -> pure (runHyperLogLog m == V.fromList [0,0,0,0,0,0,0,0])
+-- True
+--
+--
+-- The 'SipKey' is generated using system entropy, so if cryptographic security
+-- is a primary consideration, use this function to create a 'HyperLogLog'
+-- value instead of manually building one (e.g., by using the 'HyperLogLog'
+-- data constructor or by using 'mempty').
+generateHyperLogLog :: Reifies p Integer => (forall (s :: Type). HyperLogLog s p -> IO r) -> IO r
+generateHyperLogLog k = do
+  m <- generateWord64
+  n <- generateWord64
+  reifySipKey m n $ \(_ :: Proxy s) ->
+    k @s mempty
+  where
+    generateWord64 :: IO Word64
+    generateWord64 = do
+      bs <- BSL.fromStrict <$> getEntropy 8
+      pure $ Bytes.runGetL Bytes.getWord64host bs
+
+-- | If the two types @p@ and @q@ reify the same configuration, and if the two
+-- types @r@ and @s@ reify the same 'SipKey', then we can coerce between
+-- @'HyperLogLog' r p@ and @'HyperLogLog' s q@. We do this by building a hole in
+-- the @nominal@ role for the configuration parameter.
 coerceConfig :: forall p q r s. (Reifies p Integer, Reifies q Integer, Reifies r SipKey, Reifies s SipKey) => Maybe (Coercion (HyperLogLog r p) (HyperLogLog s q))
 coerceConfig | reflect (Proxy :: Proxy p) == reflect (Proxy :: Proxy q)
              , reflect (Proxy :: Proxy r) == reflect (Proxy :: Proxy s) = Just Coercion
@@ -152,19 +197,17 @@ instance Semigroup (HyperLogLog s p) where
   HyperLogLog a <> HyperLogLog b = HyperLogLog (V.zipWith max a b)
   {-# INLINE (<>) #-}
 
--- The 'Monoid' instance \"should\" just work. Give me two estimators and I
+-- | The 'Monoid' instance \"should\" just work. Give me two estimators and I
 -- can give you an estimator for the union set of the two.
+--
+-- Note that using 'mempty' permits the @s@ type parameter to be a fixed
+-- 'SipKey', which can have cryptographic security implications. See the
+-- Haddocks for 'HyperLogLog' for more details.
 instance Reifies p Integer => Monoid (HyperLogLog s p) where
   mempty = HyperLogLog $ V.replicate (numBuckets (reflect (Proxy :: Proxy p))) 0
   {-# INLINE mempty #-}
   mappend = (<>)
   {-# INLINE mappend #-}
-
---sipKey :: SipKey
---sipKey = SipKey 4 7
-
-defaultSipKey :: SipKey
-defaultSipKey = SipKey 4 7
 
 siphash :: Serial a => SipKey -> a -> Word64
 siphash k a = h

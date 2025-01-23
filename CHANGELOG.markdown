@@ -1,3 +1,21 @@
+0.5 [????.??.??]
+----------------
+* Add a `generateHyperLogLog` function that randomly generates a `HyperLogLog`
+  value using system entropy. This function is suitable for scenarios where
+  cryptographic security is a primary consideration.
+* Add an additional `s` type parameter to `HyperLogLog` that encodes the
+  `SipKey` used to configure the hash function when `insert`ing new values.
+  (Previously, inserting a new value would always use a fixed `SipKey`.)
+
+  In order to continue using the old behavior of the `insert` function, one
+  can instantiate `s` to the newly added `DefaultSipKey` type. Note that this
+  is *not* cryptographically secure, however. (In contrast, the
+  `generateHyperLogLog` function instantiates `s` with a randomly generated
+  `SipKey`.)
+* Export the `SipKey` data type and define a `reifySipKey` function to promote
+  a `SipKey` value to the type level.
+* Define a `type DefaultHyperLogLog = HyperLogLog DefaultSipKey` type synonym.
+
 0.4.6 [2022.04.18]
 ------------------
 * Remove the `siphash` dependency. Because `siphash` no longer builds on
