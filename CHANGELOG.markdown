@@ -1,4 +1,4 @@
-0.5 [????.??.??]
+0.5 [2025.01.25]
 ----------------
 * Add a `generateHyperLogLog` function that randomly generates a `HyperLogLog`
   value using system entropy. This function is suitable for scenarios where
